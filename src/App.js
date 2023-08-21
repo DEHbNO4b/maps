@@ -4,32 +4,50 @@ import { Circle, Polygon, Popup } from "react-leaflet";
 import { useState, useEffect } from "react";
 
 function App() {
-  let [strikes, setStrikes] = useState([]);
-  let [clusters, setClusters] = useState([]);
-  const [date, setDate] = useState();
-  const [time, setTime] = useState("14:00");
-  const url = "http://localhost:9090";
-  const refTime=React.createRef();
-  const refInput=React.createRef();
+  useEffect(() => {
+    fetchThunderList();
+  }, []);
+  // let [strikes, setStrikes] = useState([]);
+  // let [clusters, setClusters] = useState([]);
+  // const [date, setDate] = useState();
+  let [selectedThunderId, setSelectedThunderId] = useState();
+  const [thunder, setThunder] = useState({ cells: [] });
 
-  function loadStrikes(data) {
+  // const [time, setTime] = useState("14:00");
+  let [thunderList, setThunderList] = useState([{}]);
+  const url = "http://localhost:9090";
+  // const refTime = React.createRef();
+  // const refInput = React.createRef();
+
+  function loadThunderList(data) {
     if (data != null) {
-      setStrikes(data);
+      setThunderList(data);
     }
   }
-  function fetchStrikes() {
-    fetch(url + `/strikes?day=` + date + " " + time + "_MSC")
-      .then((response) => response.json())
-      .then((data) => loadStrikes(data));
+  function loadThunder(data) {
+    if (data != null) {
+      setThunder(null);
+      setThunder(data);
+    }
   }
 
-  function plus10min() {
-    refInput.current.value=refTime.current.value.toString();
-    const t =Date()
-     t=refTime.current.value
-    t.setTime(14)
-    refTime.current.value=t
+  function fetchThunderList() {
+    fetch(url + `/`)
+      .then((response) => response.json())
+      .then((data) => loadThunderList(data));
   }
+  function fetchThunder() {
+    fetch(url + `/thunder/` + selectedThunderId)
+      .then((response) => response.json())
+      .then((data) => loadThunder(data));
+  }
+
+  const thunderCollection = thunderList.map((t) => (
+    <option key={t.id}>{t.id}</option>
+  ));
+  let thunderCells = thunder.cells.map((c) => (
+    <option key={c.id}>{c.id}</option>
+  ));
 
   const clusterStyle = [
     "red",
@@ -62,72 +80,90 @@ function App() {
     "Gray",
     "DarkSlateGray",
   ];
-  const lightning = strikes.map((item) => (
-    <Circle
-      key={item.Id}
-      pathOptions={{
-        color: clusterStyle[Number(item.Cluster)],
+  // const lightning = strikes.map((item) => (
+  //   <Circle
+  //     key={item.Id}
+  //     pathOptions={{
+  //       color: clusterStyle[Number(item.Cluster)],
 
-        fillColor: clusterStyle[Number(item.Cluster)],
-      }}
-      eventHandlers={{
-        click: () => {
-          console.log(item);
-        },
-      }}
-      center={[item.Latitude, item.Longitude]}
-      radius={1000}
-    ></Circle>
-  ));
-  const thunders = clusters.map((item) => (
-    <Polygon
-      key={item.Claster}
-      pathOptions={{ color: "DarkSlateGray" }}
-      //eventHandlers ={{click:()=>{console.log(item.Claster)}}}
-      positions={item.Polygon}
-    >
-      <Popup>
-        Cluster:{item.Claster} <br />
-        Area:{item.area}
-        <br />
-        Capacity: {item.capacity}
-        <br />
-        Start time: {item.starttime}
-        <br />
-        End time: {item.endtime}
-      </Popup>
-    </Polygon>
-  ));
+  //       fillColor: clusterStyle[Number(item.Cluster)],
+  //     }}
+  //     eventHandlers={{
+  //       click: () => {
+  //         console.log(item);
+  //       },
+  //     }}
+  //     center={[item.Latitude, item.Longitude]}
+  //     radius={1000}
+  //   ></Circle>
+  // ));
+  // const thunders = clusters.map((item) => (
+  //   <Polygon
+  //     key={item.Claster}
+  //     pathOptions={{ color: "DarkSlateGray" }}
+  //     positions={item.Polygon}
+  //   >
+  //     <Popup>
+  //       Cluster:{item.Claster} <br />
+  //       Area:{item.area}
+  //       <br />
+  //       Capacity: {item.capacity}
+  //       <br />
+  //       Start time: {item.starttime}
+  //       <br />
+  //       End time: {item.endtime}
+  //     </Popup>
+  //   </Polygon>
+  // ));
 
   return (
     <div className="App">
-      <button onClick={fetchStrikes}>fetch strikes</button>
-      {/* <button onClick={fetchThunders}>fetch thunders</button> */}
-      {/* <select
-        onChange={e => {
-          setSelectedDay(e.target.value)
+      {/* <button onClick={fetchStrikes}>fetch strikes</button>
+       <button onClick={fetchThunders}>fetch thunders</button>  */}
+      <button onClick={fetchThunder}>fetch thunder</button>
+      <select
+        onChange={(e) => {
+          setSelectedThunderId(e.target.value);
         }}
       >
+        {thunderCollection}
+      </select>
+      <select
+        onChange={(e) => {
+          //setSelectedThunderId(e.target.value);
+        }}
+      >
+        {thunderCells}
+      </select>
 
-        {daysCollection}
-      </select> */}
-      <input type="text" name="label" defaultValue="sdfgs" ref={refInput}></input>
+      {/*  <input
+        type="text"
+        name="label"
+        defaultValue="sdfgs"
+        ref={refInput}
+      ></input>
       <label>
         data:
-        <input type="datetime" name="date" defaultValue="2022-05-20"  />
+        <input type="datetime" name="date" defaultValue="2022-05-20" />
       </label>
       <label>
         time:
-        <input type="time" name="time" ref={refTime} defaultValue="12:00" step="10" />
-      </label>
-      <button onClick={plus10min}>+10min</button>
-      <MapContainer center={[50.505, 40.0]} zoom={5} scrollWheelZoom={true}>
+         <input
+          type="time"
+          name="time"
+          ref={refTime}
+          defaultValue="12:00"
+          step="10"
+        /> 
+      </label> 
+       <button onClick={plus10min}>+10min</button> */}
+      <MapContainer center={[45.505, 40.0]} zoom={5} scrollWheelZoom={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {lightning}
-        {thunders}
+        {/* {lightning}
+        {thunders} */}
       </MapContainer>
     </div>
   );
