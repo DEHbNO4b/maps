@@ -3,7 +3,36 @@ import { MapContainer, TileLayer } from "react-leaflet";
 import { Circle, Polygon, Popup } from "react-leaflet";
 import { useState, useEffect } from "react";
 import { Row, Col, Form, FormControl, Button } from "react-bootstrap";
-
+const clusterStyle = [
+  "red",
+  "blue",
+  "yellow",
+  "brown",
+  "black",
+  "magenta",
+  "green",
+  "orange",
+  "Indigo",
+  "SeaGreen",
+  "Olive",
+  "LightSeaGreen",
+  "Teal",
+  "Aqua",
+  "Aquamarine",
+  "CadetBlue",
+  "SkyBlue",
+  "DeepSkyBlue",
+  "MediumSlateBlue",
+  "MidnightBlue",
+  "BurlyWood",
+  "Goldenrod",
+  "Chocolate",
+  "Sienna",
+  "Maroon",
+  "MistyRose",
+  "Gray",
+  "DarkSlateGray",
+];
 function App() {
   useEffect(() => {
     fetchThunderList();
@@ -17,8 +46,38 @@ function App() {
   // const [time, setTime] = useState("14:00");
   let [thunderList, setThunderList] = useState([{}]);
   const url = "http://localhost:9090";
-  // const refTime = React.createRef();
-  // const refInput = React.createRef();
+
+  const thunderVew = thunder.cells.map((item,i) => (
+  <Polygon key={item.id}
+    pathOptions={{ color: clusterStyle[i] }}
+    //eventHandlers ={{click:()=>{console.log(item.Claster)}}}
+    positions={item.polygon}>
+    <Popup>
+       Cluster:{item.name} <br />
+      Start time: {item.start_time}<br />
+      End time: {item.end_time}
+    </Popup>
+    {strokes(item.strokes,i)}
+  </Polygon>)
+
+  )
+  function strokes(data,i){
+    
+    return(
+
+    data.map((s)=>(
+      <Circle key={s.long + s.lat}
+      pathOptions={{
+        color:clusterStyle[i],
+        fillColor: clusterStyle[i],
+      }}
+      eventHandlers={{ click: () => { console.log(s) } }}
+      center={[s.lat, s.long]}
+      radius={1000}></Circle>
+
+    )))
+
+  }
 
   function loadThunderList(data) {
     if (data != null) {
@@ -27,12 +86,12 @@ function App() {
   }
   function loadThunder(data) {
     if (data != null) {
-      setThunder(null);
+      // setThunder(null);
       setThunder(data);
     }
   }
   function showData(date) {
-    console.log("in showDate:")
+    console.log("in showDate:");
     console.log(date);
   }
 
@@ -42,6 +101,10 @@ function App() {
       .then((data) => loadThunderList(data));
   }
   function fetchThunder() {
+    if (selectedThunderId === undefined) {
+     alert("select thunder");
+      return;
+    }
     fetch(url + `/thunder/` + selectedThunderId)
       .then((response) => response.json())
       .then((data) => loadThunder(data));
@@ -54,37 +117,7 @@ function App() {
     <option key={c.id}>{c.id}</option>
   ));
 
-  const clusterStyle = [
-    "red",
-    "red",
-    "blue",
-    "yellow",
-    "brown",
-    "black",
-    "magenta",
-    "green",
-    "orange",
-    "Indigo",
-    "SeaGreen",
-    "Olive",
-    "LightSeaGreen",
-    "Teal",
-    "Aqua",
-    "Aquamarine",
-    "CadetBlue",
-    "SkyBlue",
-    "DeepSkyBlue",
-    "MediumSlateBlue",
-    "MidnightBlue",
-    "BurlyWood",
-    "Goldenrod",
-    "Chocolate",
-    "Sienna",
-    "Maroon",
-    "MistyRose",
-    "Gray",
-    "DarkSlateGray",
-  ];
+
 
   const showCells = cells.map((item) => (
     <Polygon
@@ -152,8 +185,8 @@ function App() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {/* {lightning}
-        {thunders} */}
+        {/* {lightning}*/}
+        {thunderVew} 
       </MapContainer>
     </div>
   );
